@@ -1,11 +1,11 @@
-# 🧭 DataPilot
+# DataPilot
 
 > **Autonomous Multimodal Dataset Readiness & Quality Auditor for AI Training Pipelines**  
 > *Know your data before burning compute. Audit open-source datasets for fine-tuning readiness, catch poison samples, and export clean, curated training seeds.*
 
 ---
 
-## 🎯 Executive Summary & Mission
+## Executive Summary & Mission
 
 Training or fine-tuning foundation models on open-source datasets (from Hugging Face or web archives) is fraught with silent risks. Real-world public datasets are frequently contaminated with:
 - **Empty or Truncated Responses:** Model learns refusal loops or abrupt cutoffs.
@@ -27,22 +27,20 @@ Training or fine-tuning foundation models on open-source datasets (from Hugging 
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 | Capability | Description |
 | :--- | :--- |
-| 🛡️ **Zero-Compromise Security** | Local-first architecture. Large partitions stay on your disk; only bounded sample batches are evaluated. Your `.env` and API tokens never leave your local environment. |
-| 🎙️ **Multimodal Auditing** | Supports both **NLP Text** (SFT Instruction Tuning, Q&A Reasoning, Classification) and **Acoustic Audio** (Speech TTS, Voice Synthesis, Utterance Transcripts). |
-| 🧠 **Autonomous Metric Planning** | Gemini 3.5 analyzes your dataset schema and training objective to generate bespoke **Qualitative Rubrics** and **Physical Threshold Blueprints** without human bias. |
-| 🔬 **Transparent Prompt Studio** | Review and edit the synthesized LLM-as-a-Judge system prompt and user template before evaluation. Context chips keep metrics visible. |
-| ⚡ **Resilient Chunked Evaluator** | Batch-evaluates samples in sub-chunks of 15 records to prevent token overflow, accompanied by a multi-stage self-healing JSON parser. |
-| 📊 **Dynamic Good vs Bad Explorer** | Real-time Doughnut & Bar charts, 1-click partition filters (`All`, `🔴 Defective`, `🟡 Curation`, `🟢 Golden`), and deep diagnostic inspection drawer. |
-| 📥 **1-Click Clean Dataset Export** | Toggle exclusions on anomalous samples and download verified, production-ready curated datasets in standard JSON format. |
-| 🎨 **Frosted Glass Interactive UI** | Minimalist aesthetic on a black dot-matrix grid with interactive cursor ripples and canvas physics. |
+| **Multimodal Auditing** | Supports both **NLP Text** (SFT Instruction Tuning, Q&A Reasoning, Classification) and **Acoustic Audio** (Speech TTS, Voice Synthesis, Utterance Transcripts). |
+| **Autonomous Metric Planning** | Gemini 3.5 analyzes your dataset schema and training objective to generate bespoke **Qualitative Rubrics** and **Physical Threshold Blueprints** without human bias. |
+| **Transparent Prompt Studio** | Review and edit the synthesized LLM-as-a-Judge system prompt and user template before evaluation. Context chips keep metrics visible. |
+| **Resilient Chunked Evaluator** | Batch-evaluates samples in sub-chunks of 15 records to prevent token overflow, accompanied by a multi-stage self-healing JSON parser. |
+| **Dynamic Good vs Bad Explorer** | Real-time Doughnut & Bar charts, 1-click partition filters (All Samples, Defective, Needs Curation, Golden Pass), and deep diagnostic inspection drawer. |
+| **1-Click Clean Dataset Export** | Toggle exclusions on anomalous samples and download verified, production-ready curated datasets in standard JSON format. |
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 DataPilot operates on a decoupled client-server architecture:
 - **Frontend:** Lightweight, zero-dependency HTML5/CSS3/Vanilla ES6+ web interface with interactive physics and Chart.js visualizations.
@@ -98,7 +96,7 @@ flowchart TD
 
 ---
 
-## 🔄 End-to-End Request-Response Sequence
+## End-to-End Request-Response Sequence
 
 ```mermaid
 sequenceDiagram
@@ -149,125 +147,19 @@ sequenceDiagram
 
 ---
 
-## 🖥️ Frontend Walkthrough (Step-by-Step)
+## User Interface Walkthrough
 
-The interface is structured into four sequential screens, ensuring full human-in-the-loop oversight:
+Below is the complete end-to-end video demonstration of the DataPilot user interface, showcasing dataset ingestion, schema profiling, AI metric blueprint synthesis, Prompt Studio customization, live chunked sample evaluation, and curated dataset export:
 
-### Screen 1: Prompt & Ingestion Setup
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  DATASET AUDIT INGESTION                                               │
-│                                                                        │
-│  Hugging Face Dataset URL / ID:                                        │
-│  [ tatsu-lab/alpaca                                                  ] │
-│                                                                        │
-│  Training Objective Prompt:                                            │
-│  [ Fine-tune an instruction-following LLM. Audit instruction-output   ] │
-│  [ alignment, detect empty responses, and check token lengths.         ] │
-│                                                                        │
-│  Modality: [LLM Instruction Tuning ▼]  Budget: [100 Samples (Standard)▼]│
-│                                                                        │
-│                                           [ Inspect Dataset &rarr; ]      │
-└────────────────────────────────────────────────────────────────────────┘
-```
-- **Inputs:** Hugging Face URL or identifier, free-form training objective description, modality selector, and sample budget (25, 50, 100, 250).
-- **History Sidebar:** 1-click audit history presets for `tatsu-lab/alpaca`, `mozilla-foundation/common_voice_11_0`, `databricks/dolly`, and `stanfordnlp/imdb`.
-- **Canvas Physics:** Click anywhere on the background to send animated energy waves across the charcoal dot matrix.
+<video src="assets/videos/datapilot_demo.mp4" controls="controls" width="100%">
+  Your browser does not support the video tag. You can view or download the walkthrough video directly: <a href="assets/videos/datapilot_demo.mp4">assets/videos/datapilot_demo.mp4</a>
+</video>
+
+*Direct link to demonstration video:* [assets/videos/datapilot_demo.mp4](assets/videos/datapilot_demo.mp4)
 
 ---
 
-### Screen 2: Schema Inspection & AI Metric Blueprint
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  DETECTED SCHEMA & PROFILE                  Total Profiled: 52,002 rows │
-│                                                                        │
-│  Column Name     Detected Role        Data Type   Null (%)  Preview    │
-│  ───────────     ─────────────        ─────────   ────────  ───────    │
-│  instruction     Prompt / Query       string      0.0%      "Give 3..."│
-│  input           Context / Auxiliary  string      0.0%      ""         │
-│  output          Target Response      string      0.0%      "1. Eat..."│
-│                                                                        │
-│  QUALITATIVE METRICS (Evaluated via Gemini LLM-as-a-Judge)             │
-│  • QUAL_01: Instruction-Response Semantic Alignment                    │
-│  • QUAL_02: Reasoning Depth & Hallucination Avoidance                  │
-│                                                                        │
-│  PHYSICAL METRICS (Deterministic Signal Blueprint)                     │
-│  • PHYS_01: Sequence Token Length (tiktoken / 50-2048 tokens)          │
-│  • PHYS_02: Signal-to-Noise Ratio (librosa / >20 dB)                   │
-│                                                                        │
-│                                    [ Synthesize Evaluation Prompt &rarr; ]│
-└────────────────────────────────────────────────────────────────────────┘
-```
-- **Semantic Tagging:** Columns are automatically tagged with badges (`Prompt / Query`, `Context`, `Target Output`, `Acoustic Stream`).
-- **No Premature Verdicts:** Gemini does NOT guess dataset suitability before looking at samples; it only establishes domain-specific quality rubrics.
-
----
-
-### Screen 3: Prompt Studio & Evaluation Manager
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  PROMPT STUDIO & EVALUATION SUITE                                      │
-│                                                                        │
-│  Embedded Metrics: [QUAL_01: Alignment] [QUAL_02: Fluency]             │
-│                                                                        │
-│  SYSTEM PROMPT:                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │ You are an expert AI Data Quality Auditor. Strictly evaluate     │  │
-│  │ each sample against the qualitative criteria. Return valid JSON. │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│  USER TEMPLATE:                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │ ### TRAINING OBJECTIVE: "Fine-tune instruction LLM..."           │  │
-│  │ ### DATA SAMPLES: {{SAMPLE_RECORDS}}                             │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│  [ Copy Prompt ]                     [ Run Live Evaluation on 100 &rarr; ]│
-└────────────────────────────────────────────────────────────────────────┘
-```
-- **Editable & Transparent:** You can modify instructions, rubrics, or formatting rules before hitting the model.
-- **Variable Interpolation:** `{{SAMPLE_RECORDS}}` dynamically injects the downloaded bounded sample batch at execution time.
-
----
-
-### Screen 4: Findings & Dynamic Good vs Bad Explorer
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  EXECUTIVE AUDIT SUMMARY                                               │
-│                                                                        │
-│  Profiled Rows     Audited Samples     Defects Detected    Readiness   │
-│     52,002               100                  8         Needs Filter   │
-│                                                                        │
-│  [ Quality Breakdown Doughnut ]      [ Qualitative Pass-Rate Bar ]     │
-│  • 88 Golden Seed Samples            • QUAL_01: 94.0% Pass             │
-│  •  8 Needs Curation                 • QUAL_02: 92.0% Pass             │
-│  •  4 Critical Defects                                                 │
-│                                                                        │
-│  PARTITION FILTERS:                                                    │
-│  [All Samples (100)] [🔴 Defective (4)] [🟡 Curation (8)] [🟢 Golden (88)]│
-│                                                                        │
-│  SAMPLE EXPLORER TABLE:                                                │
-│  Record ID    Status          Preview Snippet             Action       │
-│  ─────────    ──────          ───────────────             ──────       │
-│  rec_0001     🟢 GOLDEN PASS  "Give 3 tips for health..." [ Inspect ➔ ]│
-│  rec_0014     🔴 CRITICAL     "[TODO]"                    [ Inspect ➔ ]│
-│  rec_0038     🟡 CURATION     "Verbatim repetition..."    [ Inspect ➔ ]│
-│                                                                        │
-│                            [ 📥 Export Curated Clean Dataset ]         │
-└────────────────────────────────────────────────────────────────────────┘
-```
-- **Partition Filtering:** Instantly isolate good vs bad samples with 1 click.
-- **Deep Diagnostic Drawer:** Clicking any sample slides open a drawer containing:
-  - Exact **Cited Defect Quote** (the smoking gun in the sample).
-  - Evaluator **Rationale & Failing Metric**.
-  - Formatted **Raw Record JSON**.
-  - **Audio Waveform Stream Player** (for speech/audio datasets).
-  - `[ 🗑️ Exclude from Clean Dataset ]` toggle button.
-- **Curated Clean Export:** Automatically excludes critical defects and downloads a ready-to-train JSON dataset.
-
----
-
-## 🚀 Quickstart & How to Run
+## Quickstart & How to Run
 
 ### 1. Prerequisites
 - **Python:** 3.10 or higher
@@ -279,7 +171,7 @@ The interface is structured into four sequential screens, ensuring full human-in
 ### 2. Clone and Setup
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/datapilot.git
+git clone https://github.com/shashi3002/datapilot.git
 cd datapilot
 
 # Create a virtual environment
@@ -333,7 +225,7 @@ You can access the UI in two ways:
 
 ---
 
-## 🧪 Running Automated Tests
+## Running Automated Tests
 
 Run the end-to-end API test suite using `pytest`:
 ```bash
@@ -351,7 +243,7 @@ The test suite validates:
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 | Endpoint | Method | Request Payload | Description |
 | :--- | :---: | :--- | :--- |
@@ -366,14 +258,22 @@ The test suite validates:
 
 ---
 
-## 📂 Project Repository Structure
+## Project Repository Structure
 
 ```
 datapilot/
 ├── .env.example              # Credentials & configuration template
+├── .gitattributes            # Git LFS tracking for large video assets
 ├── .gitignore                # Strictly excludes .env, data/, and caches
 ├── requirements.txt          # Python production & test dependencies
 ├── README.md                 # Complete documentation & architectural guide
+├── Dockerfile                # Production container deployment specification
+├── Procfile                  # Cloud deployment runtime command
+├── render.yaml               # 1-click cloud service blueprint
+│
+├── assets/                   # Project Media & Visual Assets
+│   └── videos/
+│       └── datapilot_demo.mp4 # Full UI demonstration recording
 │
 ├── app/                      # Application Source Code
 │   ├── main.py               # FastAPI entrypoint & router mounts
@@ -400,7 +300,7 @@ datapilot/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! If you want to add new modality evaluators (e.g., Computer Vision / Video), deterministic physical metric calculators, or new LLM backends:
 1. Fork the Project.
@@ -411,6 +311,6 @@ Contributions are welcome! If you want to add new modality evaluators (e.g., Com
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the Apache 2.0 License. See `LICENSE` for more information.
