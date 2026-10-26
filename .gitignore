@@ -1,0 +1,39 @@
+# Environment configuration & secrets (NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local cache data & large partitions
+data/
+artifacts/
+*.jsonl
+*.parquet
+*.wav
+*.mp3
+
+# Database files
+*.db
+*.sqlite3
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Scratch testing scripts
+scratch/
+temp/
+tmp/

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPilot - AI Dataset Readiness Copilot</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- LAYER 0: CSS Animated Drifting Blobs -->
+  <div class="blobs-container" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <!-- LAYER 1: Interactive Canvas Dot Grid and Wave Physics -->
+  <canvas id="waveCanvas" aria-hidden="true"></canvas>
+
+  <!-- LAYER 2: UI Layer (Frosted Glass & Controls) -->
+  <div class="ui-layer">
+    
+    <!-- Left Sidebar (Copilot / GPT Style) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">
+          <div class="brand-dot">DP</div>
+          <span>DataPilot</span>
+        </div>
+        <span class="brand-pill">Copilot</span>
+      </div>
+
+      <!-- New Audit Button -->
+      <button class="btn-new-audit" onclick="startNewAudit()">
+        <span style="font-size: 1.1rem; line-height: 1; color: var(--accent-clay);">+</span>
+        <span>New Dataset Audit</span>
+      </button>
+
+      <!-- History / Sessions -->
+      <div class="sidebar-section-title">Recent Audits</div>
+      <ul class="history-list">
+        <li class="history-item active" onclick="loadAuditHistory('alpaca')">
+          <span class="history-name">tatsu-lab/alpaca</span>
+          <span class="history-task">LLM Instruction Tuning • 100 samples</span>
+        </li>
+        <li class="history-item" onclick="loadAuditHistory('common_voice')">
+          <span class="history-name">common_voice_11_0</span>
+          <span class="history-task">Speech TTS Fine-Tuning • 100 samples</span>
+        </li>
+        <li class="history-item" onclick="loadAuditHistory('dolly')">
+          <span class="history-name">databricks-dolly-15k</span>
+          <span class="history-task">Reasoning & Q&A • 50 samples</span>
+        </li>
+        <li class="history-item" onclick="loadAuditHistory('imdb')">
+          <span class="history-name">imdb_sentiment</span>
+          <span class="history-task">Classification • 100 samples</span>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <span>Backend API</span>
+        <span id="backendStatusPill" style="color: var(--status-success); font-weight: 700;">● Online (127.0.0.1:8000)</span>
+      </div>
+    </aside>
+
+    <!-- Main Workstation Shell -->
+    <div class="main-shell">
+      
+      <!-- Top Navigation Bar -->
+      <header class="top-bar">
+        <div class="breadcrumbs">
+          <span>Workspace</span>
+          <span>/</span>
+          <span class="breadcrumb-active" id="currentBreadcrumb">Dataset Readiness Copilot</span>
+        </div>
+
+        <!-- Step Navigation Tabs -->
+        <nav class="copilot-steps" id="stepNav">
+          <button class="copilot-step-btn active" data-target="screen-prompt">1. Prompt & Setup</button>
+          <button class="copilot-step-btn" data-target="screen-inspect">2. Schema & Plan</button>
+          <button class="copilot-step-btn" data-target="screen-prompt-manager">3. Prompt Manager</button>
+          <button class="copilot-step-btn" data-target="screen-findings">4. Findings & Report</button>
+        </nav>
+
+        <!-- Top Actions -->
+        <div class="top-actions">
+          <button class="btn-clean" onclick="exportReport('markdown')">Export Report</button>
+        </div>
+      </header>
+
+      <!-- Scrollable Viewport -->
+      <div class="view-viewport">
+
+        <!-- ======================================================== -->
+        <!-- SCREEN 1: CHATGPT / COPILOT STYLE PROMPT HERO            -->
+        <!-- ======================================================== -->
+        <section id="screen-prompt" class="screen-view active">
+          <div class="prompt-hero-container">
+            
+            <div class="copilot-avatar">DP</div>
+            <h1 class="prompt-hero-title">What dataset do you want to audit?</h1>
+            <p class="prompt-hero-subtitle">
+              Connect any Hugging Face repository and specify your training objective in natural language. DataPilot profiles schema, audits bounded samples, and verifies readiness.
+            </p>
+
+            <!-- Unified Copilot Input Box -->
+            <div class="prompt-box-card">
+              <form id="auditForm" onsubmit="event.preventDefault(); handleStartAudit();">
+                
+                <!-- Repo Input -->
+                <div class="input-row">
+                  <div class="input-label-mini">
+                    <span>Hugging Face Dataset URL or Repository ID</span>
+                    <span>Public / Gated Repo</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    id="hfUrl" 
+                    class="clean-input" 
+                    placeholder="e.g. tatsu-lab/alpaca, mozilla-foundation/common_voice_11_0, or databricks/databricks-dolly-15k"
+                    value="tatsu-lab/alpaca"
+                    required
+                  >
+                </div>
+
+                <!-- Objective Input -->
+                <div class="input-row">
+                  <div class="input-label-mini">
+                    <span>Training Objective (Natural Language)</span>
+                    <span>Defines quality rules & checks</span>
+                  </div>
+                  <textarea 
+                    id="objectivePrompt" 
+                    class="clean-textarea" 
+                    placeholder="Describe your training objective (e.g. Fine-tune an LLM on instruction pairs. Prioritize response formatting, token length distribution, prompt leakage, and empty output detection...)"
+                  >Fine-tune an instruction-following LLM. Audit instruction-output alignment, detect empty or truncated responses, check for prompt leakage, and evaluate token length distribution.</textarea>
+                </div>
+
+                <!-- Footer Controls -->
+                <div class="prompt-box-footer">
+                  <div class="pill-group">
+                    <!-- Task Modality -->
+                    <select id="taskModality" class="pill-select">
+                      <option value="auto" selected>Modality: Auto-Detect</option>
+                      <option value="llm_instruct">LLM / Instruction Tuning</option>
+                      <option value="speech_tts">Speech / Audio (TTS / ASR)</option>
+                      <option value="text_classification">Text Classification</option>
+                      <option value="tabular">Tabular / Predictive</option>
+                    </select>
+
+                    <!-- Sample Budget -->
+                    <select id="sampleBudget" class="pill-select">
+                      <option value="25">25 Samples (Fast)</option>
+                      <option value="50">50 Samples (Balanced)</option>
+                      <option value="100" selected>100 Samples (Standard)</option>
+                      <option value="250">250 Samples (In-depth)</option>
+                    </select>
+
+                    <!-- Gemini AI Toggle -->
+                    <label class="toggle-label-mini">
+                      <input type="checkbox" id="allowExternalAI" checked style="accent-color: var(--accent-clay);">
+                      <span>AI Reasoning (Gemini)</span>
+                    </label>
+                  </div>
+
+                  <!-- Primary Submit Button (triggers wave) -->
+                  <button type="button" class="btn-send-audit" id="btnSend" onclick="handleStartAudit()">
+                    <span>Inspect Dataset &rarr;</span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+
+            <!-- Prompt Suggestions / Capabilities (Like ChatGPT Chips) -->
+            <div class="suggestions-grid">
+              <div class="suggestion-card" onclick="applySuggestion('llm_instruct')">
+                <div class="suggestion-title">💬 LLM Instruction Tuning</div>
+                <div class="suggestion-desc">Audit instruction-response pairs for token outliers, prompt leakage, and formatting quality.</div>
+              </div>
+
+              <div class="suggestion-card" onclick="applySuggestion('speech_tts')">
+                <div class="suggestion-title">🎙️ Speech & Voice Synthesis</div>
+                <div class="suggestion-desc">Detect acoustic clipping, dead silence, sample rates, and transcript alignment.</div>
+              </div>
+
+              <div class="suggestion-card" onclick="applySuggestion('text_classification')">
+                <div class="suggestion-title">📊 Text Classification</div>
+                <div class="suggestion-desc">Evaluate class balance, null values, label contamination, and vocabulary coverage.</div>
+              </div>
+
+              <div class="suggestion-card" onclick="applySuggestion('tabular')">
+                <div class="suggestion-title">📈 Tabular & Structured Data</div>
+                <div class="suggestion-desc">Inspect missingness by column, schema types, distribution skew, and outlier boundaries.</div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- SCREEN 2: SCHEMA MANIFEST & AUDIT PLAN                   -->
+        <!-- ======================================================== -->
+        <section id="screen-inspect" class="screen-view">
+          <div class="content-container">
+            
+            <div class="card">
+              <div class="card-title" id="inspectTitle">Repository Ingestion & Modality Profiling</div>
+              <div class="card-desc" id="inspectSubtitle">Repository: tatsu-lab/alpaca (Split: train) • Access Verified</div>
+
+              <!-- Ingestion Progress -->
+              <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">
+                  <span id="inspectStatusText">Parsed dataset schema and columnar signatures</span>
+                  <span style="color: var(--status-success);">Complete</span>
+                </div>
+                <div style="background: rgba(0, 0, 0, 0.08); border-radius: 999px; height: 5px; overflow: hidden; margin-bottom: 0.5rem;">
+                  <div style="background: var(--accent-clay); height: 100%; width: 100%;"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                  <span>Total records: <strong id="inspectRowCount" style="color: var(--text-primary);">52,002 rows</strong></span>
+                  <span>Detected Modality: <strong id="inspectModality" style="color: var(--accent-clay);">Instruction Text</strong></span>
+                </div>
+              </div>
+
+              <!-- AI Task & Objective Profile Card -->
+              <div id="aiTaskProfileBox" style="background: rgba(217, 119, 87, 0.06); border: 1px solid rgba(217, 119, 87, 0.25); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 750; font-size: 0.88rem; color: var(--accent-clay);">✨ Gemini Evaluation Architect</span>
+                    <span class="badge-clean badge-info" id="aiInferredDomain">Domain: Inferred</span>
+                    <span class="badge-clean badge-success" id="aiInferredParadigm">Paradigm: Inferred</span>
+                  </div>
+                  <span class="badge-clean badge-warning" id="aiStatusPill">Live Formulated</span>
+                </div>
+                <p style="font-size: 0.83rem; color: var(--text-primary); line-height: 1.5;" id="aiObjectiveInterpretation">
+                  Formulating objective metrics...
+                </p>
+              </div>
+
+              <!-- Schema Table -->
+              <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 0.5rem;">Detected Columns & Schema</div>
+              <div class="table-wrap" style="margin-bottom: 1.5rem;">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th>Column Name</th>
+                      <th>Detected Role</th>
+                      <th>Data Type</th>
+                      <th>Null (%)</th>
+                      <th>Example Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="schemaTableBody">
+                    <tr>
+                      <td><code>instruction</code></td>
+                      <td><span class="badge-clean badge-info">Prompt / Query</span></td>
+                      <td>string</td>
+                      <td>0.0%</td>
+                      <td style="color: var(--text-muted);">"Give three tips for staying healthy."</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- TIER 1: QUALITATIVE METRICS -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div>
+                  <span style="font-weight: 750; font-size: 0.92rem; color: var(--text-primary);">Tier 1: Qualitative & Semantic Metrics</span>
+                  <span class="badge-clean badge-warning" style="margin-left: 6px;">Cognitive / LLM Evaluated</span>
+                </div>
+              </div>
+              <div class="table-wrap" style="margin-bottom: 1.5rem;">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">Metric ID</th>
+                      <th style="width: 250px;">Metric & Description</th>
+                      <th>Relevance to Objective</th>
+                      <th>Evaluation Rubric</th>
+                    </tr>
+                  </thead>
+                  <tbody id="qualTableBody">
+                    <tr>
+                      <td><code>QUAL_01</code></td>
+                      <td><strong>Instruction Alignment</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Measures prompt-response semantic coherence.</span></td>
+                      <td>Directly prevents hallucination and non-answers.</td>
+                      <td>High coherence between query and answer.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- TIER 2: PHYSICAL METRICS BLUEPRINT -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div>
+                  <span style="font-weight: 750; font-size: 0.92rem; color: var(--text-primary);">Tier 2: Physical & Statistical Metrics Blueprint</span>
+                  <span class="badge-clean badge-info" style="margin-left: 6px;">Production Benchmark Reference</span>
+                </div>
+              </div>
+              <div class="table-wrap" style="margin-bottom: 1.5rem;">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">Metric ID</th>
+                      <th style="width: 250px;">Metric & Description</th>
+                      <th>Recommended Threshold</th>
+                      <th>Tool / Library</th>
+                    </tr>
+                  </thead>
+                  <tbody id="physTableBody">
+                    <tr>
+                      <td><code>PHYS_01</code></td>
+                      <td><strong>Token Length Variance</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Measures token distribution percentiles.</span></td>
+                      <td>50 to 2048 tokens</td>
+                      <td><code>transformers / tiktoken</code></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-clean" onclick="switchView('screen-prompt')">&larr; Back to Setup</button>
+                <button class="btn-clean btn-clean-primary" id="btnToPromptManager" onclick="handleGenerateEvalPrompt()">
+                  <span>Synthesize Evaluation Prompt &rarr;</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- SCREEN 3: PROMPT MANAGER & EVALUATION STUDIO             -->
+        <!-- ======================================================== -->
+        <section id="screen-prompt-manager" class="screen-view">
+          <div class="content-container">
+            
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <div class="card-title">Prompt Studio & Evaluation Manager</div>
+                  <div class="card-desc" style="margin-bottom: 0;">
+                    Synthesized by Gemini based on your qualitative metrics, training objective, and modality. You can review, refine, or customize before running evaluations.
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span class="badge-clean badge-warning" id="promptModalityBadge">Modality: NLP</span>
+                  <span class="badge-clean badge-success" id="promptStatusBadge">Synthesized by Gemini</span>
+                </div>
+              </div>
+
+              <!-- Context Injected Chips -->
+              <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
+                  Embedded Qualitative Metric Objectives:
+                </div>
+                <div id="promptMetricChips" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <!-- Dynamic chips populated by JS -->
+                  <span class="badge-clean badge-info">QUAL_01: Semantic Alignment</span>
+                </div>
+              </div>
+
+              <!-- Section 1: System Persona & Evaluator Rules -->
+              <div style="margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <span style="font-weight: 700; font-size: 0.84rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em;">
+                    1. Evaluator System Prompt (Persona & Guardrails)
+                  </span>
+                  <span style="font-size: 0.74rem; color: var(--text-muted);">Editable</span>
+                </div>
+                <textarea 
+                  id="evalSystemPromptText" 
+                  class="clean-textarea" 
+                  rows="3" 
+                  style="font-family: monospace; font-size: 0.84rem;"
+                  placeholder="System prompt establishing evaluator persona..."
+                ></textarea>
+              </div>
+
+              <!-- Section 2: Dynamic Batch Evaluation Template -->
+              <div style="margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <span style="font-weight: 700; font-size: 0.84rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em;">
+                    2. Batch Evaluation Prompt Template (LLM-as-a-Judge)
+                  </span>
+                  <span style="font-size: 0.74rem; color: var(--text-muted);">Contains <code>{{SAMPLE_RECORDS}}</code> injection placeholder</span>
+                </div>
+                <textarea 
+                  id="evalUserTemplateText" 
+                  class="clean-textarea" 
+                  rows="9" 
+                  style="font-family: monospace; font-size: 0.84rem; line-height: 1.45;"
+                  placeholder="Evaluation prompt template with rubrics and output schema..."
+                ></textarea>
+              </div>
+
+              <!-- Section 3: Full Compiled Prompt Preview (Collapsible) -->
+              <div style="margin-bottom: 1.5rem;">
+                <details style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.75rem 1rem;">
+                  <summary style="font-weight: 700; font-size: 0.82rem; cursor: pointer; color: var(--accent-clay);">
+                    🔍 View Full Compiled Prompt (Sample Row Injected)
+                  </summary>
+                  <pre id="evalCompiledPreview" style="margin-top: 0.75rem; padding: 0.75rem; background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--radius-xs); font-family: monospace; font-size: 0.78rem; overflow-x: auto; white-space: pre-wrap; max-height: 220px; line-height: 1.4; color: var(--text-primary);"></pre>
+                </details>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <button class="btn-clean" onclick="switchView('screen-inspect')">&larr; Back to Schema & Plan</button>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-clean" id="btnCopyPrompt" onclick="copyCompiledPrompt()">
+                    <span>📋 Copy Prompt</span>
+                  </button>
+                  <button class="btn-clean" id="btnRegeneratePrompt" onclick="handleGenerateEvalPrompt(true)">
+                    <span>⚡ Re-synthesize</span>
+                  </button>
+                  <button class="btn-clean btn-clean-primary" id="btnRunAuditEval" onclick="runLiveAuditEvaluation()">
+                    <span>Run Evaluation on Samples &rarr;</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- SCREEN 4: AUDIT FINDINGS & DIAGNOSTIC REPORT             -->
+        <!-- ======================================================== -->
+        <section id="screen-findings" class="screen-view">
+          <div class="content-container">
+            
+            <!-- Summary Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <h2 style="font-size: 1.45rem; font-weight: 750; color: var(--text-primary);" id="findingsDatasetTitle">Audit Report: tatsu-lab/alpaca</h2>
+                <p style="font-size: 0.82rem; color: var(--text-muted);" id="findingsSubtitle">Objective: LLM Instruction Tuning • Samples Audited • Dynamic Evaluation</p>
+              </div>
+              
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="btn-clean btn-clean-primary" onclick="downloadCuratedDataset()">📥 Export Curated Clean Dataset</button>
+                <button class="btn-clean" onclick="exportReport('markdown')">Report (.md)</button>
+                <button class="btn-clean" onclick="exportReport('json')">JSON (.json)</button>
+              </div>
+            </div>
+
+            <!-- Top Metric Stats -->
+            <div class="stats-row">
+              <div class="stat-box">
+                <div class="stat-box-label">Profiled Dataset</div>
+                <div class="stat-box-val" id="statProfiled">52,002</div>
+                <div class="stat-box-sub">Total repository rows</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-label">Audited Samples</div>
+                <div class="stat-box-val" id="statSampled">5</div>
+                <div class="stat-box-sub">Evaluated by Gemini</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-label">Flagged Anomalies</div>
+                <div class="stat-box-val" style="color: var(--status-critical);" id="statAnomalies">0</div>
+                <div class="stat-box-sub" id="statAnomaliesSub" style="color: var(--status-critical); font-weight: 700;">0.0% defect rate</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-box-label">Readiness Verdict</div>
+                <div class="stat-box-val" style="color: var(--status-success); font-size: 1.35rem; margin-top: 4px;" id="statVerdict">Ready for Training</div>
+                <div class="stat-box-sub" id="statVerdictSub">High quality samples</div>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+              <div class="card" style="padding: 1.25rem;">
+                <div style="font-size: 0.88rem; font-weight: 700; margin-bottom: 0.75rem;">Quality Partition Breakdown</div>
+                <div style="max-height: 180px; display: flex; justify-content: center;">
+                  <canvas id="issuesChart" width="180" height="180"></canvas>
+                </div>
+              </div>
+              <div class="card" style="padding: 1.25rem;">
+                <div style="font-size: 0.88rem; font-weight: 700; margin-bottom: 0.75rem;">Qualitative Metric Pass Rates (%)</div>
+                <div style="max-height: 180px;">
+                  <canvas id="distributionChart" height="160"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anomalies & Sample Explorer Table -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                  <div class="card-title">Dynamic Sample Explorer (Good vs Bad Inspector)</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Inspect individual samples to review exact defect quotes, failing rubrics, or golden seed verification.</div>
+                </div>
+                
+                <!-- Partition Filters -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="sampleFilterButtonGroup">
+                  <button class="btn-clean" id="filterBtnAll" onclick="filterSampleTable('all')" style="font-size: 0.76rem; padding: 4px 10px;">All (<span id="countAll">0</span>)</button>
+                  <button class="btn-clean" id="filterBtnDefects" onclick="filterSampleTable('critical')" style="font-size: 0.76rem; padding: 4px 10px; color: var(--status-critical);">🔴 Defective (<span id="countDefects">0</span>)</button>
+                  <button class="btn-clean" id="filterBtnWarnings" onclick="filterSampleTable('warning')" style="font-size: 0.76rem; padding: 4px 10px; color: var(--status-warning);">🟡 Curation (<span id="countWarnings">0</span>)</button>
+                  <button class="btn-clean" id="filterBtnGolden" onclick="filterSampleTable('golden')" style="font-size: 0.76rem; padding: 4px 10px; color: var(--status-success);">🟢 Golden (<span id="countGolden">0</span>)</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">Record ID</th>
+                      <th style="width: 150px;">Status & Verdict</th>
+                      <th>Content Preview</th>
+                      <th style="width: 180px;">Target Metric</th>
+                      <th style="width: 110px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="findingsTableBody">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Detail Inspector Drawer -->
+              <div class="detail-drawer" id="detailDrawer">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700;" id="detailKey">Record Inspector: rec_0001</h4>
+                    <span id="detailVerdictBadge" class="badge-clean badge-success">PASS</span>
+                  </div>
+                  <button class="btn-clean" style="padding: 2px 8px; font-size: 0.75rem;" onclick="closeDrawer()">✕ Close</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div>
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Content & Raw Record</div>
+                    <div id="detailContentPreview" style="background: rgba(0, 0, 0, 0.03); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 4px; font-size: 0.82rem; max-height: 180px; overflow-y: auto; font-family: monospace; white-space: pre-wrap;">
+                      <!-- Content -->
+                    </div>
+                    <div id="detailAudioContainer" style="display: none; margin-top: 8px;">
+                      <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 2px; font-weight: 600;">Audio Waveform Stream:</div>
+                      <audio id="detailAudioPlayer" controls style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Diagnostic Evaluation & Evidence</div>
+                    <div id="detailEvidence" style="background: rgba(0, 0, 0, 0.03); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 4px; font-size: 0.82rem; line-height: 1.5;">
+                      <!-- Evidence -->
+                    </div>
+
+                    <div style="margin-top: 0.75rem; display: flex; gap: 8px; align-items: center;">
+                      <button class="btn-clean" id="btnToggleExclude" style="font-size: 0.78rem;" onclick="toggleCurrentSampleExclusion()">
+                        <span>🗑️ Exclude from Clean Dataset</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Copilot Recommendations Box -->
+            <div class="card" style="background: rgba(217, 119, 87, 0.05); border: 1px solid rgba(217, 119, 87, 0.25);">
+              <div style="font-weight: 750; font-size: 0.92rem; margin-bottom: 0.5rem; color: var(--accent-clay);">🤖 AI Copilot Actionable Recommendations</div>
+              <ul id="recommendationsList" style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-primary); line-height: 1.8;">
+                <!-- Populated via JS -->
+              </ul>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
