@@ -149,13 +149,12 @@ sequenceDiagram
 
 ## User Interface Walkthrough
 
-Below is the complete end-to-end video demonstration of the DataPilot user interface, showcasing dataset ingestion, schema profiling, AI metric blueprint synthesis, Prompt Studio customization, live chunked sample evaluation, and curated dataset export:
+Click the preview below to watch the full-screen interactive demonstration of DataPilot's end-to-end dataset auditing workflow:
 
-<video src="assets/videos/datapilot_demo.mp4" controls="controls" width="100%">
-  Your browser does not support the video tag. You can view or download the walkthrough video directly: <a href="assets/videos/datapilot_demo.mp4">assets/videos/datapilot_demo.mp4</a>
-</video>
+[![Watch Full DataPilot UI Walkthrough Demo](assets/screenshots/video_banner.svg)](https://github.com/shashi3002/datapilot/blob/main/assets/videos/datapilot_demo.mp4)
 
-*Direct link to demonstration video:* [assets/videos/datapilot_demo.mp4](assets/videos/datapilot_demo.mp4)
+- **Interactive Player:** [Open GitHub Video Stream](https://github.com/shashi3002/datapilot/blob/main/assets/videos/datapilot_demo.mp4)
+- **Direct Asset:** [Download `assets/videos/datapilot_demo.mp4`](assets/videos/datapilot_demo.mp4)
 
 ---
 
