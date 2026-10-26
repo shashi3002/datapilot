@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: datapilot-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
