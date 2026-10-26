@@ -149,12 +149,40 @@ sequenceDiagram
 
 ## User Interface Walkthrough
 
-Click the preview below to watch the full-screen interactive demonstration of DataPilot's end-to-end dataset auditing workflow:
+DataPilot provides an interactive, four-stage auditing workflow designed for ML engineers and data practitioners:
 
-[![Watch Full DataPilot UI Walkthrough Demo](assets/screenshots/video_banner.svg)](https://github.com/shashi3002/datapilot/blob/main/assets/videos/datapilot_demo.mp4)
+### 1. Ingestion & Objective Setup
+Connect any Hugging Face dataset URL or repository identifier (e.g., `tatsu-lab/alpaca`), articulate the downstream model training objective in natural language, configure the modality, and select the sample audit budget (25, 50, 100, 250 samples).
 
-- **Interactive Player:** [Open GitHub Video Stream](https://github.com/shashi3002/datapilot/blob/main/assets/videos/datapilot_demo.mp4)
-- **Direct Asset:** [Download `assets/videos/datapilot_demo.mp4`](assets/videos/datapilot_demo.mp4)
+![Step 1: Prompt and Setup](assets/screenshots/01_prompt_and_setup.png)
+
+---
+
+### 2. Tier 1 Qualitative & Semantic Metrics
+Google Gemini analyzes the dataset structure and training goal to formulate cognitive, LLM-evaluated qualitative metrics (such as Instruction-Output Alignment, Prompt Leakage Detection, and Response Completeness) with concrete 1-5 scoring rubrics.
+
+![Step 2: Tier 1 Qualitative and Semantic Metrics](assets/screenshots/02_qualitative_metrics.png)
+
+---
+
+### 3. Tier 2 Physical & Statistical Metrics Blueprint
+Establishes deterministic engineering thresholds for physical properties—token length distribution against context windows, empty response tolerances, vocabulary lexical diversity (Type-Token Ratio), and semantic deduplication indices with designated evaluation libraries.
+
+![Step 2: Tier 2 Physical and Statistical Metrics Blueprint](assets/screenshots/03_physical_metrics_blueprint.png)
+
+---
+
+### 4. Prompt Manager & Studio
+Review and customize the synthesized LLM-as-a-Judge system prompt and user template before execution. Variable placeholders like `{{SAMPLE_RECORDS}}` dynamically inject bounded dataset records for evaluation, with live preview inspection and prompt clipboard copying.
+
+![Step 3: Prompt Manager and Studio](assets/screenshots/04_prompt_manager_and_studio.png)
+
+---
+
+### 5. Findings & Quality Breakdown Report
+Displays the high-level dataset readiness verdict, total profiled rows, audited sample count, sample defect rate percentage, an interactive Quality Partition Breakdown Doughnut chart, and a Qualitative Metric Pass Rates bar chart, along with 1-click curated clean dataset export.
+
+![Step 4: Findings and Quality Breakdown Report](assets/screenshots/05_findings_and_report.png)
 
 ---
 
@@ -262,7 +290,6 @@ The test suite validates:
 ```
 datapilot/
 ├── .env.example              # Credentials & configuration template
-├── .gitattributes            # Git LFS tracking for large video assets
 ├── .gitignore                # Strictly excludes .env, data/, and caches
 ├── requirements.txt          # Python production & test dependencies
 ├── README.md                 # Complete documentation & architectural guide
@@ -271,8 +298,12 @@ datapilot/
 ├── render.yaml               # 1-click cloud service blueprint
 │
 ├── assets/                   # Project Media & Visual Assets
-│   └── videos/
-│       └── datapilot_demo.mp4 # Full UI demonstration recording
+│   └── screenshots/          # Step-by-step UI screenshots
+│       ├── 01_prompt_and_setup.png
+│       ├── 02_qualitative_metrics.png
+│       ├── 03_physical_metrics_blueprint.png
+│       ├── 04_prompt_manager_and_studio.png
+│       └── 05_findings_and_report.png
 │
 ├── app/                      # Application Source Code
 │   ├── main.py               # FastAPI entrypoint & router mounts
